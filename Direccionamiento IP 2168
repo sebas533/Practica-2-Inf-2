@@ -1,0 +1,68 @@
+# Plan de direccionamiento — Infraestructura 2 - Matricula: 2168
+
+## Base del direccionamiento
+
+Todo el direccionamiento de la práctica sale de mi matrícula, **2168**, que se divide en dos partes: `21` y `68`. Con eso se arman los dos bloques de la red:
+
+- **Redes LAN (privadas):** `10.21.68.x`
+- **Enlaces WAN con el ISP:** `21.68.x.x`
+
+Las dos LAN comparten el mismo bloque `10.21.68.0/24`, que se divide en dos subredes de distinto tamaño según lo que necesita cada sitio.
+
+## Subredes
+
+| Red | Máscara | Red | Primer host | Último host | Broadcast | Hosts útiles | Uso |
+|---|---|---|---|---|---|---:|---|
+| `10.21.68.0/25` | 255.255.255.128 | `10.21.68.0` | `10.21.68.1` | `10.21.68.126` | `10.21.68.127` | 126 | Usuarios (VLAN 10) |
+| `10.21.68.128/28` | 255.255.255.240 | `10.21.68.128` | `10.21.68.129` | `10.21.68.142` | `10.21.68.143` | 14 | Servidor web |
+| `21.68.3.0/30` | 255.255.255.252 | `21.68.3.0` | `21.68.3.1` | `21.68.3.2` | `21.68.3.3` | 2 | Enlace ISP ↔ FortiGate |
+| `21.68.4.0/30` | 255.255.255.252 | `21.68.4.0` | `21.68.4.1` | `21.68.4.2` | `21.68.4.3` | 2 | Enlace ISP ↔ R-CISCO |
+
+**Por qué estos prefijos**
+
+- **`/25` para usuarios:** deja 126 direcciones, de sobra para una VLAN de usuarios y para el rango DHCP.
+- **`/28` para el servidor:** solo hace falta el gateway y el servidor, y un `/28` (14 hosts) deja margen para crecer sin desperdiciar tanto espacio.
+- **`/30` para los enlaces WAN:** son enlaces punto a punto y solo necesitan dos direcciones, una por cada lado.
+
+Las dos subredes `10.21.68.0/25` y `10.21.68.128/28` no se solapan: la primera cubre de `.0` a `.127` y la segunda empieza justo en `.128`.
+
+## Asignación por equipo
+
+| Segmento | Equipo | Interfaz | Dirección | Función |
+|---|---|---|---|---|
+| Salida a Internet | ISP-2168 | Fa0/0 | DHCP (observado: `192.168.42.44/24`) | Salida del laboratorio por GNS3 NAT |
+| WAN FortiGate–ISP | ISP-2168 | Fa1/0 | `21.68.3.1/30` | Lado ISP |
+| WAN FortiGate–ISP | FortiGate | port1 `WAN-ISP` | `21.68.3.2/30` | WAN del FortiGate y peer de la VPN |
+| WAN ISP–Cisco | ISP-2168 | Fa1/1 | `21.68.4.1/30` | Lado ISP |
+| WAN ISP–Cisco | R-CISCO-2168 | Fa1/0 | `21.68.4.2/30` | WAN del Cisco y peer de la VPN |
+| Usuarios (VLAN 10) | FortiGate | `VLAN10-USERS` (sobre port2) | `10.21.68.1/25` | Gateway y servidor DHCP |
+| Usuarios (VLAN 10) | PC usuario | ens3 | `10.21.68.10/25` (DHCP) | Cliente |
+| Servidor | R-CISCO-2168 | Fa1/1 | `10.21.68.129/28` | Gateway del servidor |
+| Servidor | Servidor web | ens3 | `10.21.68.130/28` | Apache con HTTPS |
+| Administración | FortiGate | port3 | `192.168.11.2/24` | Acceso a la GUI |
+
+## DHCP de los usuarios
+
+El servidor DHCP está en el FortiGate, sobre la interfaz `VLAN10-USERS`.
+
+| Parámetro | Valor |
+|---|---|
+| Rango | `10.21.68.10` – `10.21.68.100` |
+| Máscara | `255.255.255.128` (`/25`) |
+| Gateway | `10.21.68.1` |
+| DNS | `8.8.8.8` y `1.1.1.1` |
+
+Las direcciones `.2` a `.9` y de `.101` en adelante quedan libres para equipos con IP fija, si hicieran falta.
+
+## Redes protegidas por la VPN
+
+| Extremo | Equipo | Dirección del peer | Red local | Red remota |
+|---|---|---|---|---|
+| Sitio de usuarios | FortiGate | `21.68.3.2` | `10.21.68.0/25` | `10.21.68.128/28` |
+| Sitio del servidor | R-CISCO-2168 | `21.68.4.2` | `10.21.68.128/28` | `10.21.68.0/25` |
+
+Cada extremo apunta como peer a la IP WAN del otro (`remote-gw 21.68.4.2` en el FortiGate y `set peer 21.68.3.2` en el Cisco), y las redes local y remota de un lado son las remota y local del otro.
+
+## Por qué las redes 10.21.68.x no están en el ISP
+
+El router ISP solo conoce los enlaces `21.68.3.0/30` y `21.68.4.0/30`, además de su salida a Internet. No tiene ninguna ruta hacia `10.21.68.0/25` ni `10.21.68.128/28`. Por eso la comunicación entre usuario y servidor solo es posible cuando viaja encapsulada dentro del túnel IPsec entre las dos IP WAN.
