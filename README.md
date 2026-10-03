@@ -28,6 +28,9 @@ Lo que se busca demostrar:
 
 ![Topología de la infraestructura 2](Infra%202/Topologia%20.png)
 
+<img width="740" height="420" alt="image" src="https://github.com/user-attachments/assets/30320d51-2ae2-4b82-a2d4-237a504db21f" />
+
+
 Los equipos son:
 
 | Equipo en GNS3 | Rol |
