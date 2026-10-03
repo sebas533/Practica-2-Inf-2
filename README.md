@@ -1,6 +1,6 @@
 # Práctica #2 — Topología #2: VPN Site-to-Site FortiGate ↔ Cisco
 
-> **Video de demostración:** [Ver video](PENDIENTE-URL-DEL-VIDEO)
+> **Video de demostración:** [Ver video](https://youtu.be/_FywT6igguA)
 
 **Asignatura:** [SR]
 **Estudiante:** [Luis Sebastian Roble Perez]
