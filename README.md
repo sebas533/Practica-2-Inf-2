@@ -247,8 +247,6 @@ La primera línea de la ACL excluye del NAT el tráfico entre `10.21.68.128/28` 
 - Gateway: `10.21.68.129`
 - Servicio: Apache2 con HTTPS (443) y certificado autofirmado
 
-La instalación se puede repetir con el script [`scripts/web-server-https-setup.sh`](scripts/web-server-https-setup.sh).
-
 ---
 
 ## 6. VPN IPsec Site-to-Site
