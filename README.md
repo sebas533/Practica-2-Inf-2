@@ -377,7 +377,7 @@ Las configuraciones están en [`running-configs/`](running-configs/):
 
 ## 9. Scripts
 
-La carpeta [`scripts/`](scripts/) tiene dos scripts de apoyo:
+La carpeta [`scripts/`](https://github.com/sebas533/Practica-2-Inf-2/blob/main/Scripts/Scripts.md) tiene dos scripts de apoyo:
 
 - `web-server-https-setup.sh`: instala Apache2 y activa HTTPS con un certificado autofirmado en `WEB-SV-2168`.
 - `test-vpn-connectivity.sh`: ejecuta las tres pruebas principales hacia el servidor (ping, HTTPS con curl y recorrido con tracepath).
