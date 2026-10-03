@@ -1,0 +1,87 @@
+! ============================================================
+! R-CISCO-2168  (Cisco C7200)  -  Práctica #2, Topología #2
+! Extracto de "show running-config"
+! SANITIZADO: la PSK real fue reemplazada por <PSK-OMITIDA>
+! ============================================================
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+!
+hostname R-CISCO-2168
+!
+no aaa new-model
+no ip icmp rate-limit unreachable
+no ip domain lookup
+ip cef
+no ipv6 cef
+multilink bundle-name authenticated
+ip tcp synwait-time 5
+!
+! ---------------- IKE / FASE 1 ----------------
+crypto isakmp policy 10
+ authentication pre-share
+ group 5
+crypto isakmp key <PSK-OMITIDA> address 21.68.3.2
+!
+! ---------------- IPsec / FASE 2 ----------------
+crypto ipsec transform-set TS-FG-CISCO esp-des esp-sha-hmac
+ mode tunnel
+!
+crypto map VPN-MAP 10 ipsec-isakmp
+ set peer 21.68.3.2
+ set security-association lifetime seconds 43200
+ set transform-set TS-FG-CISCO
+ set pfs group5
+ match address VPN-TRAFFIC
+!
+interface FastEthernet0/0
+ no ip address
+ shutdown
+ duplex full
+!
+interface FastEthernet1/0
+ description WAN-HACIA-ISP-2168-T2
+ ip address 21.68.4.2 255.255.255.252
+ ip nat outside
+ speed auto
+ duplex auto
+ crypto map VPN-MAP
+!
+interface FastEthernet1/1
+ description LAN-HACIA-WEB-SV-2168
+ ip address 10.21.68.129 255.255.255.240
+ ip nat inside
+ speed auto
+ duplex auto
+!
+! ---------------- NAT / EXENCIÓN NAT ----------------
+ip nat inside source list 101 interface FastEthernet1/0 overload
+ip forward-protocol nd
+no ip http server
+no ip http secure-server
+!
+ip route 0.0.0.0 0.0.0.0 21.74.4.1
+ip route 0.0.0.0 0.0.0.0 21.68.4.1
+!
+ip access-list extended VPN-TRAFFIC
+ permit ip 10.21.68.128 0.0.0.15 10.21.68.0 0.0.0.127
+!
+access-list 101 deny   ip 10.21.68.128 0.0.0.15 10.21.68.0 0.0.0.127
+access-list 101 permit ip 10.21.68.128 0.0.0.15 any
+!
+control-plane
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+ stopbits 1
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ login
+!
+end

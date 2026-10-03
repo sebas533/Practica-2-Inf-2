@@ -1,0 +1,62 @@
+! ============================================================
+! ISP-2168-T2  (Cisco C7200)  -  Práctica #2, Topología #2
+! Extracto de "show running-config"
+! ============================================================
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+!
+hostname ISP-2168-T2
+!
+no aaa new-model
+no ip icmp rate-limit unreachable
+no ip domain lookup
+ip cef
+no ipv6 cef
+multilink bundle-name authenticated
+ip tcp synwait-time 5
+!
+interface FastEthernet0/0
+ description SALIDA-A-INTERNET
+ ip address dhcp
+ ip nat outside
+ duplex full
+!
+interface FastEthernet1/0
+ description WAN-HACIA-FG-T2
+ ip address 21.68.3.1 255.255.255.252
+ ip nat inside
+ speed auto
+ duplex auto
+!
+interface FastEthernet1/1
+ description WAN-HACIA-R-CISCO-2168
+ ip address 21.68.4.1 255.255.255.252
+ ip nat inside
+ speed auto
+ duplex auto
+!
+ip nat inside source list 1 interface FastEthernet0/0 overload
+ip forward-protocol nd
+no ip http server
+no ip http secure-server
+!
+access-list 1 permit 21.68.3.0 0.0.0.3
+access-list 1 permit 21.68.4.0 0.0.0.3
+!
+control-plane
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+ stopbits 1
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+ stopbits 1
+line vty 0 4
+ login
+!
+end
